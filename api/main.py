@@ -206,6 +206,26 @@ def index():
     return "Hello World"
 
 
+@app.get("/api/ping", response_class=Response)
+def ping():
+    """保活接口，定期访问以防止 Supabase 数据库暂停"""
+    connection = None
+    cursor = None
+    try:
+        connection = psycopg2.connect(databaseUrl)
+        cursor = connection.cursor()
+        cursor.execute("SELECT 1")
+        return json.dumps({"status": "ok", "message": "pong"})
+    except psycopg2.Error as e:
+        print(f"Ping error: {e}")
+        return json.dumps({"status": "error", "message": str(e)})
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
 @app.get("/api/init", response_class=Response)
 def init(pwd: str = ""):
     if pwd != amdinPWD:
